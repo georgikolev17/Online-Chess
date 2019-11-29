@@ -1,9 +1,31 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Online_Chess
 {
     class Program
     {
+        static List<Char> WhiteFigures = new List<char>()
+        {
+            'K',
+            'Q',
+            'B',
+            'N',
+            'R',
+            'P'
+        };
+        static List<Char> BlackFigures = new List<char>()
+        {
+            'k',
+            'q',
+            'b',
+            'n',
+            'r',
+            'p'
+        };
+        static int moves = 1;
+        static int lastMoveStartRow = 0, lastMoveStartCol = 0;
+        static int lastMoveFinalRow = 0, lastMoveFinalCol = 0;
         static void Main(string[] args)
         {
             char[,] chessBoard = new char[8, 8]
@@ -20,6 +42,30 @@ namespace Online_Chess
 
             while (true)
             {
+                if(IsChess(chessBoard) && !IsTherePossibleMoveForWhite(chessBoard) && moves % 2 == 1)
+                {
+                    Console.WriteLine("Black won by checkmate!");
+                    break;
+                }
+                if (!IsChess(chessBoard) && !IsTherePossibleMoveForWhite(chessBoard) && moves % 2 == 1)
+                {
+                    Console.WriteLine("Draw!");
+                    break;
+                }
+                if (IsChess(chessBoard) && !IsTherePossibleMoveForBlack(chessBoard) && moves % 2 == 0)
+                {
+                    Console.WriteLine("White won by checkmate!");
+                    break;
+                }
+                if (!IsChess(chessBoard) && !IsTherePossibleMoveForBlack(chessBoard) && moves % 2 == 0)
+                {
+                    Console.WriteLine("Draw!");
+                    break;
+                }
+                if (IsChess(chessBoard))
+                {
+                    Console.WriteLine("Check!");
+                }
                 string startPosition = Console.ReadLine();
                 string finalPosition = Console.ReadLine();
 
@@ -33,10 +79,12 @@ namespace Online_Chess
                     Console.WriteLine("You cannot move there!");
                 }
                 
-                else if (!IsChess(chessBoard, startRow, startCol, finalRow, finalCol) && CanMove(chessBoard, startRow, startCol, finalRow, finalCol))
-                {
+                else if (CanMove(chessBoard, startRow, startCol, finalRow, finalCol))
+                { 
+                    CanPromote(chessBoard, startRow, startCol, finalRow, finalCol);
                     chessBoard[finalRow, finalCol] = chessBoard[startRow, startCol];
                     chessBoard[startRow, startCol] = ' ';
+                    moves++;
                 }
                 else
                 {
@@ -51,12 +99,107 @@ namespace Online_Chess
                     }
                     Console.WriteLine();
                 }
+                lastMoveStartRow = startRow;
+                lastMoveStartCol = startCol;
+                lastMoveFinalRow = finalRow;
+                lastMoveFinalCol = finalCol;
             }
+        }
+
+        static bool IsTherePossibleMoveForWhite(char[,] chessBoard)
+        {
+            int countedFigures = 0;
+            for (int i = 0; i < 7; i++)
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    if (WhiteFigures.Contains(chessBoard[i, j]))
+                    {
+                        countedFigures++;
+                        for (int x = 0; x < 7; x++)
+                        {
+                            for (int k = 0; k < 7; k++)
+                            {
+                                if(x == i && k == j)
+                                {
+                                    continue;
+                                }
+                                if(CanMove(chessBoard, i, j, x, k))
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    if(countedFigures == 16)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
+
+        static bool IsTherePossibleMoveForBlack(char[,] chessBoard)
+        {
+            int countedFigures = 0;
+            for (int i = 0; i < 7; i++)
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    if (BlackFigures.Contains(chessBoard[i, j]))
+                    {
+                        countedFigures++;
+                        for (int x = 0; x < 7; x++)
+                        {
+                            for (int k = 0; k < 7; k++)
+                            {
+                                if (x == i && k == j)
+                                {
+                                    continue;
+                                }
+                                if (CanMove(chessBoard, i, j, x, k))
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    if (countedFigures == 16)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return false;
         }
 
         static bool CanMove(char[,] chessBoard, int startRow, int startCol, int finalRow, int finalCol)
         {
-            if(chessBoard[startRow, startCol] == 'P')
+            char[,] boardAfterMove = new char[8, 8];
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    boardAfterMove[i, j] = chessBoard[i, j];
+                }
+            }
+            boardAfterMove[finalRow, finalCol] = boardAfterMove[startRow, startCol];
+            boardAfterMove[startRow, startCol] = ' ';
+            if (IsChess(boardAfterMove))
+            {
+                return false;
+            }
+
+            if (moves % 2 == 1 && !WhiteFigures.Contains(chessBoard[startRow, startCol]))
+            {
+                return false;
+            }
+            if (moves % 2 == 0 && !BlackFigures.Contains(chessBoard[startRow, startCol]))
+            {
+                return false;
+            }
+            if (chessBoard[startRow, startCol] == 'P')
             {
                 return CanWhitePawnMove(chessBoard, startRow, startCol, finalRow, finalCol);
             }
@@ -105,21 +248,384 @@ namespace Online_Chess
                 return CanBlackKingMove(chessBoard, startRow, startCol, finalRow, finalCol);
             }
 
-            return true;
+            return false;
         }
 
-        static bool IsChess(char[,] chessBoard, int startRow, int StartCol, int finalRow, int finalCol)
+        static bool IsChess(char[,] chessBoard)
         {
-            //TODO
+            if(moves % 2== 1)
+            {
+                int row=0, col=0;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if(chessBoard[i, j] == 'K')
+                        {
+                            row = i;
+                            col = j;
+                        }
+                    }
+                }
+
+                #region ChessWithKnight
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 2, col + 1) && chessBoard[row + 2, col + 1] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 2, col - 1) && chessBoard[row + 2, col - 1] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 2, col + 1) && chessBoard[row - 2, col + 1] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 2, col - 1) && chessBoard[row - 2, col - 1] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 1, col + 2) && chessBoard[row + 1, col + 2] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 1, col - 2) && chessBoard[row + 1, col - 2] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 1, col + 2) && chessBoard[row - 1, col + 2] == 'n')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 1, col - 2) && chessBoard[row - 1, col - 2] == 'n')
+                {
+                    return true;
+                }
+                #endregion
+
+                int currentRow = row + 1;
+                int currentCol = col;
+                while (currentRow<=7 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'k' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'r')
+                    {
+                        return true;
+                    }
+
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+
+                    currentRow++;
+                }
+
+                currentRow = row - 1;
+                while (currentRow >= 0 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'k' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'r')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+                    currentRow--;
+                }
+
+                currentRow = row;
+                currentCol = col + 1;
+                while (currentCol <= 7 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'k' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'r')
+                    {
+                        return true;
+                    }
+                    if ( chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+                    currentCol++;
+                }
+
+                currentCol = col - 1;
+                while (currentCol >= 0 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'k' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'r')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+                    currentCol--;
+                }
+
+                currentRow = row - 1;
+                currentCol = col + 1;
+                while (currentCol <= 7 && currentRow >= 0 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if (((chessBoard[currentRow, currentCol] == 'k') && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'b')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+                    currentCol++;
+                    currentRow--;
+                }
+
+                currentRow = row + 1;
+                currentCol = col + 1;
+                while (currentCol <= 7 && currentRow <= 7 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if (((chessBoard[currentRow, currentCol] == 'k' || chessBoard[currentRow, currentCol] == 'p') && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'b')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+                    currentCol++;
+                    currentRow++;
+                }
+
+                currentRow = row + 1;
+                currentCol = col - 1;
+                while (currentCol >= 0 && currentRow <= 7 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if (((chessBoard[currentRow, currentCol] == 'k' || chessBoard[currentRow, currentCol] == 'p') && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'b')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+
+                    currentCol--;
+                    currentRow++;
+                }
+
+                currentRow = row - 1;
+                currentCol = col - 1;
+                while (currentCol >= 0 && currentRow >= 0 && !WhiteFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'k' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'q' || chessBoard[currentRow, currentCol] == 'b')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'p' || chessBoard[currentRow, currentCol] == 'n' || chessBoard[currentRow, currentCol] == 'b' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'k'))
+                    {
+                        break;
+                    }
+
+                    currentCol--;
+                    currentRow--;
+                }
+            }
+            else if(moves % 2 == 0)
+            {
+                int row = 0, col = 0;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    for (int j = 0; j < 8; j++)
+                    {
+                        if (chessBoard[i, j] == 'k')
+                        {
+                            row = i;
+                            col = j;
+                        }
+                    }
+                }
+
+                #region ChessWithKnight
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 2, col + 1) && chessBoard[row + 2, col + 1] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 2, col - 1) && chessBoard[row + 2, col - 1] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 2, col + 1) && chessBoard[row - 2, col + 1] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 2, col - 1) && chessBoard[row - 2, col - 1] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 1, col + 2) && chessBoard[row + 1, col + 2] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row + 1, col - 2) && chessBoard[row + 1, col - 2] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 1, col + 2) && chessBoard[row - 1, col + 2] == 'N')
+                {
+                    return true;
+                }
+                if (AreCoordinatesCorect(chessBoard, 0, 0, row - 1, col - 2) && chessBoard[row - 1, col - 2] == 'N')
+                {
+                    return true;
+                }
+                #endregion
+
+                int currentRow = row + 1;
+                int currentCol = col;
+
+                while (currentRow <= 7 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'K' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'R')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentRow++;
+                }
+
+                currentRow = row - 1;
+                while (currentRow >= 0 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'K' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'R')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentRow--;
+                }
+
+                currentRow = row;
+                currentCol = col + 1;
+                while (currentCol <= 7 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'K' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'R')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentCol++;
+                }
+
+                currentCol = col - 1;
+                while (currentCol >= 0 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'K' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'R')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentCol--;
+                }
+
+                currentRow = row - 1;
+                currentCol = col + 1;
+                while (currentCol <= 7 && currentRow >= 0 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if (((chessBoard[currentRow, currentCol] == 'K' || chessBoard[currentRow, currentCol] == 'P') && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'B')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentCol++;
+                    currentRow--;
+                }
+
+                currentRow = row + 1;
+                currentCol = col + 1;
+                while (currentCol <= 7 && currentRow <= 7 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'K' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'B')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentCol++;
+                    currentRow++;
+                }
+
+                currentRow = row + 1;
+                currentCol = col - 1;
+                while (currentCol >= 0 && currentRow <= 7 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if ((chessBoard[currentRow, currentCol] == 'K' && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'B')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentCol--;
+                    currentRow++;
+                }
+
+                currentRow = row - 1;
+                currentCol = col - 1;
+                while (currentCol >= 0 && currentRow >= 0 && !BlackFigures.Contains(chessBoard[currentRow, currentCol]))
+                {
+                    if (((chessBoard[currentRow, currentCol] == 'K' || chessBoard[currentRow, currentCol] == 'P') && Math.Abs(currentRow - row) == 1) || chessBoard[currentRow, currentCol] == 'Q' || chessBoard[currentRow, currentCol] == 'B')
+                    {
+                        return true;
+                    }
+                    if (chessBoard[currentRow, currentCol] == 'P' || chessBoard[currentRow, currentCol] == 'N' || chessBoard[currentRow, currentCol] == 'B' || (Math.Abs(currentCol - col) > 1 && chessBoard[currentRow, currentCol] == 'K'))
+                    {
+                        break;
+                    }
+                    currentCol--;
+                    currentRow--;
+                }
+            }
             return false;
         }
 
         static bool CanWhitePawnMove(char[,] chessBoard, int startRow, int startCol, int finalRow, int finalCol)
         {
-            if(((finalCol==startCol && finalRow == startRow+1) || ((finalCol == startCol+1 || finalCol == startCol-1) && finalRow == startRow+1 && chessBoard[finalRow, finalCol] != ' ')) ||
-                (startRow == 1 && finalRow == startRow + 2 && finalCol == startCol && chessBoard[startRow + 1, finalCol] == ' '))
+            Console.WriteLine(chessBoard[finalRow, finalCol] == ' ');
+            Console.WriteLine(chessBoard[finalRow - 1, finalCol] == 'p');
+            Console.WriteLine(lastMoveStartCol == finalCol);
+            Console.WriteLine(lastMoveFinalCol == finalCol);
+            Console.WriteLine(lastMoveFinalRow == startRow);
+            Console.WriteLine(lastMoveStartRow == startRow + 2);
+            if ((finalCol == startCol && finalRow == startRow + 1 && (chessBoard[finalRow, finalCol] == ' '))
+               || ((finalCol == startCol + 1 || finalCol == startCol - 1) && finalRow == startRow + 1 && chessBoard[finalRow, finalCol] != ' ')
+               || (chessBoard[finalRow, finalCol] == ' ' && chessBoard[finalRow - 1, finalCol] == 'p' && lastMoveStartCol == finalCol && lastMoveFinalCol == finalCol && lastMoveFinalRow == startRow && lastMoveStartRow == startRow + 2)
+               || (startRow == 1 && finalRow == startRow + 2 && finalCol == startCol && chessBoard[startRow + 1, finalCol] == ' ' && chessBoard[finalRow, finalCol] == ' '))
             {
-                return true;
+                if (chessBoard[finalRow, finalCol] == ' ' && chessBoard[finalRow - 1, finalCol] == 'p' && lastMoveStartCol == finalCol && lastMoveFinalCol == finalCol && lastMoveFinalRow == startRow && lastMoveStartRow == startRow + 2)
+                {
+                    chessBoard[lastMoveFinalRow, lastMoveFinalCol] = ' ';
+                    chessBoard[finalRow, finalCol] = 'P';
+                }
+                    return true;
             }
 
             return false;
@@ -127,9 +633,15 @@ namespace Online_Chess
 
         static bool CanBlackPawnMove(char[,] chessBoard, int startRow, int startCol, int finalRow, int finalCol)
         {
-            if (((finalCol == startCol && finalRow == startRow - 1) || ((finalCol == startCol + 1 || finalCol == startCol - 1) && finalRow == startRow - 1 && chessBoard[finalRow, finalCol] != ' ')) ||
-                (startRow == 6 && finalRow == startRow - 2 && finalCol == startCol && chessBoard[startRow - 1, finalCol] == ' '))
+            if ((finalCol == startCol && finalRow == startRow - 1 && chessBoard[finalRow, finalCol] == ' ') 
+                || ((finalCol == startCol + 1 || finalCol == startCol - 1) && finalRow == startRow - 1 && chessBoard[finalRow, finalCol] != ' ') || (chessBoard[finalRow, finalCol] == ' ' && chessBoard[finalRow + 1, finalCol] == 'P' && lastMoveStartCol == finalCol && lastMoveFinalCol == finalCol && lastMoveFinalRow == startRow && lastMoveStartRow == startRow - 2)
+                || (startRow == 6 && finalRow == startRow - 2 && finalCol == startCol && chessBoard[startRow - 1, finalCol] == ' ' && chessBoard[finalRow, finalCol] == ' '))
             {
+                if(chessBoard[finalRow, finalCol] == ' ' && chessBoard[finalRow + 1, finalCol] == 'P' && lastMoveStartCol == finalCol && lastMoveFinalCol == finalCol && lastMoveFinalRow == startRow && lastMoveStartRow == startRow - 2)
+                {
+                    chessBoard[lastMoveFinalRow, lastMoveFinalCol] = ' ';
+                    chessBoard[finalRow, finalCol] = 'p';
+                }
                 return true;
             }
 
@@ -380,14 +892,29 @@ namespace Online_Chess
 
             return false;
         }
+
+        static void CanPromote(char[,] chessBoard, int startRow, int startCol, int finalRow, int finalCol)
+        {
+            if(chessBoard[startRow, startCol] == 'P' && finalRow == 7)
+            {
+                Console.Write("Choose what you want to promote (Q-queen, N-knight, B-bishop, R-rook): ");
+                string piece = Console.ReadLine();
+                chessBoard[startRow, startCol] = char.Parse(piece.ToUpper());
+                Console.WriteLine();
+            }
+            else if (chessBoard[startRow, startCol] == 'p' && finalRow == 0)
+            {
+                Console.Write("Choose what you want to promote (Q-queen, N-knight, B-bishop, R-rook): ");
+                string piece = Console.ReadLine();
+                chessBoard[startRow, startCol] = char.Parse(piece.ToLower());
+                Console.WriteLine();
+            }
+        }
     }
 }
 
 /*
     TODO:
-    - mate
-    - pat
     - an-pasan
-    -check
  */
  
