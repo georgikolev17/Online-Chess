@@ -1,0 +1,34 @@
+body {
+    background: url("images/wood.jpg");
+}
+
+.cell {
+    height: 65px;
+    width: 65px;
+}
+
+#white {
+    background-color: rgb(233, 226, 162);
+}
+
+#black {
+    background-color: rgb(139, 76, 33);
+}
+
+table {
+    border-color: black;
+}
+
+.notation {
+    font-style: inherit;
+    font-size: 20px;
+    text-align: center;
+    height:30px;
+}
+
+.numbers {
+    font-style: inherit;
+    font-size: 20px;
+    text-align: center;
+    width:30px;
+}
