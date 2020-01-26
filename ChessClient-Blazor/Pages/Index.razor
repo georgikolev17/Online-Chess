@@ -1,0 +1,182 @@
+﻿@page "/"
+@using System.Threading;
+@using WebApiTest.Classes;
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+Welcome to your new app.
+
+<h1>You must create your ID before start or join game</h1>
+
+<button @onclick=@(() => ButtonNewGameClicked(playerId))>New Game</button>
+
+<input type="text" id="join" @bind-value="GameCode" />
+
+
+<div>@Counter</div>
+
+<button @onclick=@(() => ButtonJoinGameClicked(playerId, GameCode))>Join Game</button>
+
+@functions {
+    private HttpClient Http = new HttpClient();
+
+    public string Msg { get; set; }
+
+    public string GameCode { get; set; }
+
+    public bool PlayerIsWhite { get; set; }
+
+    public Game Game { get; set; }
+
+    public string FromPosition { get; set; }
+
+    public string ToPosition { get; set; }
+
+    private string playerId = GeneratePlayerId();
+
+    public int Counter { get; set; }
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    static string GeneratePlayerId()
+    {
+        string playerID = Guid.NewGuid().ToString("N");
+        return playerID;
+    }
+
+    protected override void OnInitialized()
+    {
+        //List<string> chessboard = await sessionStorage.GetItemAsync< List<string> >("chessboard");
+        var timer = new Timer(new TimerCallback(async _ =>
+        {
+            await UpdateGame();
+            await this.InvokeAsync(() => this.StateHasChanged());
+        }), null, 1000, 1000);
+    }
+
+    private async Task UpdateGame()
+    {
+        Counter++;
+        if (this.GameCode != null)
+        {
+            this.Game = await Http.GetJsonAsync<Game>(
+                NavManager.BaseUri + $"games/state?gameCode={this.GameCode}");
+        }
+    }
+
+    public async Task ButtonNewGameClicked(string playerId)
+    {
+        Game game = await Http.GetJsonAsync<Game>(
+            NavManager.BaseUri + $"games/new?playerId={playerId}");
+        this.Msg = "Game created. Code = " + game.Code;
+        this.PlayerIsWhite = true;
+        this.GameCode = game.Code;
+    }
+
+    public async Task ButtonJoinGameClicked(string playerId, string gameCode)
+    {
+        Game game = await Http.GetJsonAsync<Game>(
+            NavManager.BaseUri + $"games/join?playerId={playerId}&gameCode={gameCode}");
+        this.Msg = "Game joined. Code = " + gameCode;
+        this.PlayerIsWhite = false;
+        this.GameCode = game.Code;
+    }
+
+    public async Task ButtonMoveClicked()
+    {
+        await Http.GetJsonAsync<Game>(NavManager.BaseUri +
+            $"games/move?playerId={this.playerId}&gameCode={this.GameCode}&fromPos={this.FromPosition}&toPos={this.ToPosition}");
+    }
+
+    private string ChoosePiece(char piece)
+    {
+        switch (piece)
+        {
+            case 'K':
+                return "whiteKing";
+            case 'Q':
+                return "whiteQueen";
+            case 'B':
+                return "whiteBishop";
+            case 'N':
+                return "whiteNight";
+            case 'R':
+                return "whiteRook";
+            case 'P':
+                return "whitePawn";
+            case 'k':
+                return "blackKing";
+            case 'q':
+                return "BlackQueen";
+            case 'b':
+                return "blackBishop";
+            case 'n':
+                return "blackNight";
+            case 'r':
+                return "blackRook";
+            case 'p':
+                return "blackPawn";
+            default:
+                return null;
+        }
+    }
+}
+
+<div>
+    @Msg
+</div>
+
+@if (Game != null)
+{
+    <div>Game:</div>
+    <table border="1">
+    @for(int row = 0; row < 8; row++)
+    {
+        <tr>
+            @for (int col = 0; col < 8; col++)
+            {
+                string str = $"css/images/{ChoosePiece(Game.Chessboard[row][col])}.png";
+                if ((row + col) % 2 != 0)
+                {
+                    <td class="square black">
+                        @if(Game.Chessboard[row][col] != ' ')
+                        {
+                            <img src=@str />
+                        }
+                    </td>
+                }
+                else
+                {
+                    <td class="square white">
+                        @if(Game.Chessboard[row][col] != ' ')
+                        {
+                            <img src=@str />
+                        }
+                    </td>
+                }
+
+            }
+        </tr>
+    }
+    </table>
+
+    <style>
+        .square
+        {
+            width: 70px;
+            height: 70px;
+            text-align: center;
+        }
+        .black
+        {
+            background-color: saddlebrown;
+        }
+        .white
+        {
+            background-color: white;
+        }
+    </style>
+
+<input type="text" id="fromPosition" @bind-value="FromPosition" />
+<input type="text" id="toPosition" @bind-value="ToPosition" />
+<button @onclick=@ButtonMoveClicked>Move</button>
+}
