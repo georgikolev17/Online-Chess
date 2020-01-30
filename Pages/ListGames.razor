@@ -1,0 +1,64 @@
+﻿@page "/list-games"
+
+@using ChessServer.Classes;
+@inherits ChessBasePage;
+
+<h1>All Chess Games</h1>
+
+<p>These are all games you can join:</p>
+
+@if (this.Games != null && this.Games.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Game State</th>
+                <th>Game Code</th>
+                <th>Join Game</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var game in Games)
+            {
+            <tr>
+                <td>@DateTime.Now</td>
+                <td>@game.GameState</td>
+                <td>@game.Code</td>
+                <td>
+                    @if (game.GameState == GameState.WaitingSecondPlayer)
+                    {
+                        <button @onclick=@(() => ButtonJoinGameClicked(game.Code))>Join</button>
+                    }
+                </td>
+            </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div>No games!</div>
+}
+
+@functions {
+    private ICollection<Game> Games;
+
+    protected async override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        this.Games = await this.Http.GetJsonAsync<ICollection<Game>>(
+            NavManager.BaseUri + "games/list");
+        this.StateHasChanged();
+    }
+
+    public async Task ButtonJoinGameClicked(string gameCode)
+    {
+        Game game = await Http.GetJsonAsync<Game>(NavManager.BaseUri + 
+            $"games/join?playerId={this.PlayerId}&gameCode={gameCode}");
+        this.PlayerIsWhite = false;
+        this.GameCode = game.Code;
+        await this.SaveGameState();
+        NavManager.NavigateTo("/play-game");
+    }
+}

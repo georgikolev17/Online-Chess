@@ -1,0 +1,218 @@
+﻿@page "/play-game"
+
+@using System.Threading;
+@using ChessServer.Classes;
+@inherits ChessBasePage;
+
+<h3>Play Game</h3>
+
+<div>Game code: @this.GameCode</div>
+
+@functions {
+    public int Counter { get; set; }
+
+    public Game Game { get; set; }
+
+    public string FromPosition { get; set; }
+
+    public string ToPosition { get; set; }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (firstRender)
+        {
+            var timer = new Timer(new TimerCallback(state =>
+            {
+                this.InvokeAsync(UpdateGame);
+            }), null, 1000, 1000);
+        }
+    }
+
+    public async Task UpdateGame()
+    {
+        if (this.GameCode != null)
+        {
+            this.Game = await Http.GetJsonAsync<Game>(
+                NavManager.BaseUri + $"games/state?gameCode={this.GameCode}");
+        }
+        this.Counter++;
+        this.StateHasChanged();
+    }
+
+    public async Task ButtonMoveClicked()
+    {
+        if (Game.GameState == GameState.Started)
+        {
+            await Http.GetJsonAsync<Game>(NavManager.BaseUri +
+                $"games/move?playerId={this.PlayerId}&gameCode={this.GameCode}&fromPos={this.FromPosition}&toPos={this.ToPosition}");
+            await UpdateGame();
+        }
+    }
+
+    private string ChoosePiece(char piece)
+    {
+        switch (piece)
+        {
+            case 'K':
+                return "whiteKing";
+            case 'Q':
+                return "whiteQueen";
+            case 'B':
+                return "whiteBishop";
+            case 'N':
+                return "whiteNight";
+            case 'R':
+                return "whiteRook";
+            case 'P':
+                return "whitePawn";
+            case 'k':
+                return "blackKing";
+            case 'q':
+                return "BlackQueen";
+            case 'b':
+                return "blackBishop";
+            case 'n':
+                return "blackNight";
+            case 'r':
+                return "blackRook";
+            case 'p':
+                return "blackPawn";
+            default:
+                return null;
+        }
+    }
+}
+
+<div>Counter: @Counter</div>
+
+@if (this.Game != null)
+{
+    <div>Time: @(Game.Time)|@(Game.Increment)</div>
+
+    <table class="chessboard" border="1">
+        @for (int row = 0; row < 8; row++)
+        {
+            <tr>
+                @for (int col = 0; col < 8; col++)
+                {
+                    if(col == 0)
+                    {
+                        <td class="numbers">@(row+1)</td>
+                    }
+                    string str = $"css/images/{ChoosePiece(Game.Chessboard[row][col])}.png";
+                    if ((row + col) % 2 != 0)
+                    {
+                    <td class="square black">
+                        @if (Game.Chessboard[row][col] != ' ')
+                        {
+                            <img src=@str />
+                        }
+                    </td>
+                    }
+                    else
+                    {
+                        <td class="square white">
+                            @if (Game.Chessboard[row][col] != ' ')
+                            {
+                                <img src=@str />
+                            }
+                        </td>
+                    }
+
+                }
+            </tr>
+            if(row == 7)
+            {
+                <tr>
+                    <td></td>
+                    <td class="letters">a</td>
+                    <td class="letters">b</td>
+                    <td class="letters">c</td>
+                    <td class="letters">d</td>
+                    <td class="letters">e</td>
+                    <td class="letters">f</td>
+                    <td class="letters">g</td>
+                    <td class="letters">h</td>
+                </tr>
+            }
+        }
+    </table>
+    <br>
+    <input type="text" id="fromPosition" @bind-value="FromPosition" />
+    <input type="text" id="toPosition" @bind-value="ToPosition" />
+    <button @onclick=@ButtonMoveClicked>Move</button>
+    <div class="moves">
+        @for(int i=0;i<Game.NumberOfMoves;i++)
+        {
+        <span class="whole-move">
+             @if (i % 2 == 0)
+              {
+                <span class="number">@((i/2)+1)</span>
+              }
+              <span class="single-move">@Game.Moves[i]</span>
+        </span>
+            if (i % 2 == 1)
+            {
+                <br/>
+            }
+        }
+    </div>
+}
+
+
+<style>
+    .square {
+        width: 70px;
+        height: 70px;
+        text-align: center;
+    }
+
+    .black {
+        background-color: saddlebrown;
+    }
+
+    .white {
+        background-color: white;
+    }
+
+    .letters {
+        text-align:center;
+        width: 70px;
+        height: 15px;
+    }
+    .numbers {
+        text-align: center;
+        width: 15px;
+        height: 70px;
+    }
+
+    .chessboard{
+        float:left;
+    }
+
+    .moves{
+        height: 300px;
+        max-height:300px;
+        width: 400px;
+        border:double;
+        overflow: scroll;
+        background-color:lightgrey;
+    }
+    .whole-move {
+        height: 30px;
+    }
+    .single-move {
+        float:left;
+        width:180px;
+        min-width:180px;
+        text-align:left;
+        border:thin;
+        display: inline-block;
+    }
+    .number{
+        float:left
+    }
+</style>
+<div id="message"></div>
+

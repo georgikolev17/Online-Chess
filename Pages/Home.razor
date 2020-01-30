@@ -1,0 +1,63 @@
+﻿@page "/"
+
+@using ChessServer.Classes;
+@inherits ChessBasePage;
+
+<h1>Online Chess</h1>
+
+<p>You must create your ID before start or join game.</p>
+
+<button class="newGameBtn" @onclick=@ButtonNewGameClicked>New Game</button>
+
+<div>@Msg</div>
+
+<div>
+    <p>
+        Time:
+        <input type="number" class="time" @bind-value="minutes" placeholder="min"/>
+        <input type="number" class="time" @bind-value="seconds" placeholder="inc"/>
+    </p>
+</div>
+
+@functions {
+    public string Msg { get; set; }
+
+    private int minutes;
+
+    private int seconds;
+
+    private string GenerateRandomPlayerId()
+    {
+        string playerID = Guid.NewGuid().ToString("N");
+        return playerID;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        if (firstRender)
+        {
+            this.PlayerId = GenerateRandomPlayerId();
+        }
+    }
+
+    public async Task ButtonNewGameClicked()
+    {
+        Game game = await Http.GetJsonAsync<Game>(
+            NavManager.BaseUri + $"games/new?playerId={this.PlayerId}&mins={minutes}&increment={seconds}");
+        this.PlayerIsWhite = true;
+        this.GameCode = game.Code;
+        this.Msg = "New game created. Game code: " + this.GameCode;
+        await this.SaveGameState();
+        NavManager.NavigateTo("/play-game");
+    }
+}
+
+<style>
+    .time {
+        width: 65px;
+    }
+</style>
+
+<script src="~/lib/aspnet/signalr/dist/browser/signalr.js"></script>
+<script src="~js/game.js"></script>

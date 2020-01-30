@@ -1,4 +1,2 @@
-/WebApiTest/obj
-/WebApiTest/bin
-/ChessClient-Blazor/obj
-/ChessClient-Blazor/bin
+/bin
+/obj
