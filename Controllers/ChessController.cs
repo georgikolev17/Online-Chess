@@ -80,7 +80,8 @@ namespace ChessServer.Controllers
             {
                 return game;
             }
-            if(chessLogic.Controller(fromPos, toPos) != State.ImpossibleMove)
+            State state = chessLogic.Controller(fromPos, toPos);
+            if (state != State.ImpossibleMove)
             {
                 game.IsWhiteTurn = !game.IsWhiteTurn;
                 int startRow = int.Parse(fromPos[1].ToString()) - 1;
@@ -92,6 +93,27 @@ namespace ChessServer.Controllers
                 game.Chessboard[finalRow][finalCol] = game.Chessboard[startRow][startCol];
                 game.Chessboard[startRow][startCol] = ' ';
                 game.NumberOfMoves++;
+            }
+
+            switch (state)
+            {
+                case State.WhiteIsMate:
+                    game.StateAfterFinish = State.WhiteIsMate;
+                    break;
+                case State.BlackIsMate:
+                    game.StateAfterFinish = State.BlackIsMate;
+                    break;
+                case State.Draw:
+                    game.StateAfterFinish = State.Draw;
+                    break;
+                case State.ImpossibleMove:
+                    game.StateAfterFinish = State.ImpossibleMove;
+                    break;
+                case State.CorrectMove:
+                    game.StateAfterFinish = State.CorrectMove;
+                    break;
+                default:
+                    break;
             }
 
             return game;

@@ -16,7 +16,7 @@ namespace ChessServer.Classes
     {
         public string Code { get; set; }
         public GameState GameState { get; set; }
-        public State StateAfterFinish { get; set; }
+
         public bool IsWhiteTurn { get; set; }
         public List<char[]> Chessboard { get; set; }
         public int Time { get; set; }

@@ -2,6 +2,7 @@
 
 @using System.Threading;
 @using ChessServer.Classes;
+@using ChessServer
 @inherits ChessBasePage;
 
 <h3>Play Game</h3>
@@ -9,6 +10,8 @@
 <div>Game code: @this.GameCode</div>
 
 @functions {
+    public string Message { get; set; }
+
     public int Counter { get; set; }
 
     public Game Game { get; set; }
@@ -16,6 +19,8 @@
     public string FromPosition { get; set; }
 
     public string ToPosition { get; set; }
+
+    public bool IsStartPositionClicked { get; set; } = false;
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -40,13 +45,52 @@
         this.StateHasChanged();
     }
 
+    /*public async Task PositionClicked(int row, int col)
+    {
+        string position = ((char)(Math.Abs(8-row)+97)).ToString() + col.ToString();
+        if(position == FromPosition)
+        {
+            FromPosition = "";
+            IsStartPositionClicked = false;
+        }
+        if (Game.GameState == GameState.Started  && IsStartPositionClicked)
+        {
+            ToPosition = position;
+            await Http.GetJsonAsync<Game>(NavManager.BaseUri +
+                $"games/move?playerId={this.PlayerId}&gameCode={this.GameCode}&fromPos={this.FromPosition}&toPos={this.ToPosition}");
+            await UpdateGame();
+            IsStartPositionClicked = false;
+        }
+        else if(!IsStartPositionClicked && Game.GameState == GameState.Started && Game.Chessboard[row][col] != ' ')
+        {
+            FromPosition = position;
+            IsStartPositionClicked = true;
+        }
+    }*/
     public async Task ButtonMoveClicked()
     {
         if (Game.GameState == GameState.Started)
         {
-            await Http.GetJsonAsync<Game>(NavManager.BaseUri +
+            Game game = await Http.GetJsonAsync<Game>(NavManager.BaseUri +
                 $"games/move?playerId={this.PlayerId}&gameCode={this.GameCode}&fromPos={this.FromPosition}&toPos={this.ToPosition}");
             await UpdateGame();
+            switch (game.StateAfterFinish)
+            {
+                case State.WhiteIsMate:
+                    this.Message = "Black won!";
+                    break;
+                case State.BlackIsMate:
+                    this.Message = "White won";
+                    break;
+                case State.Draw:
+                    this.Message = "Draw!";
+                    break;
+                case State.CorrectMove:
+                    this.Message = "It's your turn!";
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -103,12 +147,12 @@
                     string str = $"css/images/{ChoosePiece(Game.Chessboard[row][col])}.png";
                     if ((row + col) % 2 != 0)
                     {
-                    <td class="square black">
-                        @if (Game.Chessboard[row][col] != ' ')
-                        {
-                            <img src=@str />
-                        }
-                    </td>
+                        <td class="square black">
+                            @if (Game.Chessboard[row][col] != ' ')
+                            {
+                                <img src=@str />
+                            }
+                        </td>
                     }
                     else
                     {
@@ -126,14 +170,14 @@
             {
                 <tr>
                     <td></td>
-                    <td class="letters">a</td>
-                    <td class="letters">b</td>
-                    <td class="letters">c</td>
-                    <td class="letters">d</td>
-                    <td class="letters">e</td>
-                    <td class="letters">f</td>
-                    <td class="letters">g</td>
                     <td class="letters">h</td>
+                    <td class="letters">g</td>
+                    <td class="letters">f</td>
+                    <td class="letters">e</td>
+                    <td class="letters">d</td>
+                    <td class="letters">c</td>
+                    <td class="letters">b</td>
+                    <td class="letters">a</td>
                 </tr>
             }
         }
@@ -141,7 +185,7 @@
     <br>
     <input type="text" id="fromPosition" @bind-value="FromPosition" />
     <input type="text" id="toPosition" @bind-value="ToPosition" />
-    <button @onclick=@ButtonMoveClicked>Move</button>
+    <button @onclick =@(ButtonMoveClicked)>Move</button>
     <div class="moves">
         @for(int i=0;i<Game.NumberOfMoves;i++)
         {
@@ -158,6 +202,7 @@
             }
         }
     </div>
+    <h1>@Message</h1>
 }
 
 

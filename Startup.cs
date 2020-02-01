@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ChessClient_Blazor.Data;
 using Microsoft.AspNetCore.Mvc;
 using Blazored.SessionStorage;
 using ChessClient_Blazor.Hubs;
@@ -31,10 +30,9 @@ namespace ChessClient_Blazor
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
             services.AddHttpClient();
             services.AddBlazoredSessionStorage();
-            services.AddSignalR().AddMessagePackProtocol();
+            services.AddSignalR();
             //MvcOptions options = new MvcOptions();
             //options.EnableEndpointRouting = false;
             //services.AddMvc();
