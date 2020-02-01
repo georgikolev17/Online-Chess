@@ -32,10 +32,6 @@ namespace ChessClient_Blazor
             services.AddServerSideBlazor();
             services.AddHttpClient();
             services.AddBlazoredSessionStorage();
-            services.AddSignalR();
-            //MvcOptions options = new MvcOptions();
-            //options.EnableEndpointRouting = false;
-            //services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,7 +50,6 @@ namespace ChessClient_Blazor
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
-
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
@@ -62,9 +57,7 @@ namespace ChessClient_Blazor
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
                 endpoints.MapControllers();
-                endpoints.MapHub<GameHub>("/gamehub");
             });
-            //app.UseMvc();
         }
     }
 }

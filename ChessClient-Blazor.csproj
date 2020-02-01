@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazor.Extensions.SignalR" Version="1.0.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="2.1.1" />
     <PackageReference Include="Blazored.SessionStorage" Version="1.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="0.7.0" />

@@ -14,6 +14,8 @@ namespace ChessServer.Classes
 
     public class Game
     {
+        public DateTime TimeOfCreation { get; set; }
+        public string  Name { get; set; }
         public string Code { get; set; }
         public GameState GameState { get; set; }
         public State StateAfterFinish { get; set; }

@@ -15,9 +15,11 @@ namespace ChessServer.Controllers
 
         [HttpGet]
         [Route("games/new")]
-        public Game CreateNewGame(string playerId, int mins, int increment)
+        public Game CreateNewGame(string playerId, int mins, int increment, string name)
         {
             Game newGame = new Game();
+            newGame.Name = name;
+            newGame.TimeOfCreation = DateTime.Now;
             newGame.PlayerIdWhite = playerId;
             newGame.Time = mins;
             newGame.Increment = increment;

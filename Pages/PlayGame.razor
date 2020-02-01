@@ -3,11 +3,12 @@
 @using System.Threading;
 @using ChessServer.Classes;
 @using ChessServer
+@using  Blazor.Extensions;
 @inherits ChessBasePage;
 
 <h3>Play Game</h3>
 
-<div>Game code: @this.GameCode</div>
+<div>You have to refresh the game if the counter stops.</div>
 
 @functions {
     public string Message { get; set; }
@@ -45,28 +46,6 @@
         this.StateHasChanged();
     }
 
-    /*public async Task PositionClicked(int row, int col)
-    {
-        string position = ((char)(Math.Abs(8-row)+97)).ToString() + col.ToString();
-        if(position == FromPosition)
-        {
-            FromPosition = "";
-            IsStartPositionClicked = false;
-        }
-        if (Game.GameState == GameState.Started  && IsStartPositionClicked)
-        {
-            ToPosition = position;
-            await Http.GetJsonAsync<Game>(NavManager.BaseUri +
-                $"games/move?playerId={this.PlayerId}&gameCode={this.GameCode}&fromPos={this.FromPosition}&toPos={this.ToPosition}");
-            await UpdateGame();
-            IsStartPositionClicked = false;
-        }
-        else if(!IsStartPositionClicked && Game.GameState == GameState.Started && Game.Chessboard[row][col] != ' ')
-        {
-            FromPosition = position;
-            IsStartPositionClicked = true;
-        }
-    }*/
     public async Task ButtonMoveClicked()
     {
         if (Game.GameState == GameState.Started)

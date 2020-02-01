@@ -5,9 +5,11 @@
 
 <h1>Online Chess</h1>
 
-<p>You must create your ID before start or join game.</p>
+<a>
+    <input type="text" class="name" @bind-value="Name" placeholder="Name"/>
+    <button class="newGameBtn" @onclick=@ButtonNewGameClicked>New Game</button>
+</a>
 
-<button class="newGameBtn" @onclick=@ButtonNewGameClicked>New Game</button>
 
 <div>@Msg</div>
 
@@ -19,7 +21,11 @@
     </p>
 </div>
 
+
+
 @functions {
+    public string Name { get; set; }
+
     public string Msg { get; set; }
 
     private int minutes;
@@ -44,7 +50,7 @@
     public async Task ButtonNewGameClicked()
     {
         Game game = await Http.GetJsonAsync<Game>(
-            NavManager.BaseUri + $"games/new?playerId={this.PlayerId}&mins={minutes}&increment={seconds}");
+            NavManager.BaseUri + $"games/new?playerId={this.PlayerId}&mins={this.minutes}&increment={this.seconds}&name={this.Name}");
         this.PlayerIsWhite = true;
         this.GameCode = game.Code;
         this.Msg = "New game created. Game code: " + this.GameCode;
@@ -56,5 +62,8 @@
 <style>
     .time {
         width: 65px;
+    }
+    .name {
+        width: 150px;
     }
 </style>
